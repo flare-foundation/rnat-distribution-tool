@@ -1,10 +1,5 @@
 node_modules
 .env
-artifacts
 dist
-coverage
-.nyc_output
 
 .DS_Store
-calculations
-test-db
