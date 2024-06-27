@@ -6,11 +6,7 @@ Create an environment file (`.env`) with the following content (see `.env-templa
 - PROJECT_ID - ID of the project
 - PRIVATE_KEY - Private key of the project's distributor
 - NETWORK - Network on which to distribute rewards (flare/songbird/coston/coston2)
-- Optionally one can set custom RPC endpoints for each network that will override the public ones:
-  - FLARE_RPC
-  - SONGBIRD_RPC
-  - COSTON_RPC
-  - COSTON2_RPC
+- Optionally one can set custom RPC endpoints for each network that will override the public ones (e.g. for Flare network one should set `FLARE_RPC=<private_rpc>`, for others use `SONGBIRD_RPC`, `COSTON_RPC`, `COSTON2_RPC`).
 
 ## Build the tool
 - Clone the repo.
