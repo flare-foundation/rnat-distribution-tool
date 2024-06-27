@@ -8,35 +8,18 @@ const parseCsv = require('csv-parse/lib/sync');
 
 dotenv.config();
 
+if (!RPC) {
+  throw new Error("NETWORK env variable is not set or is set to an unsupported network.");
+}
+
 const web3 = new Web3(RPC);
 
-const distAbi = JSON.parse(readFileSync(`abi/Dist.json`).toString()).abi;
-const dist = new web3.eth.Contract(distAbi, CONTRACTS.Dist.address);
 const rNatAbi = JSON.parse(readFileSync(`abi/RNat.json`).toString()).abi;
 const rNat = new web3.eth.Contract(rNatAbi, CONTRACTS.RNat.address);
 
 const waitFinalize3 = waitFinalize3Factory(web3);
 
 let pending: number = 0;
-
-export async function distribute(filePath: string) {
-  if (!process.env.PRIVATE_KEY) {
-    throw new Error(
-      "PRIVATE_KEY env variable is required."
-    );
-  }
-
-  let wallet = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
-
-  let data = await readCSV(filePath);
-  const batchSize = 3;
-  for (let i = 0; i < data.addresses.length; i += batchSize) {
-    const addressesBatch = data.addresses.slice(i, i + batchSize);
-    const amountsBatch = data.amounts.slice(i, i + batchSize);
-    var fnToEncode = dist.methods.distribute(addressesBatch, amountsBatch);
-    await signAndFinalize3(wallet, dist.options.address, fnToEncode);
-  }
-}
 
 export async function distributeRNat(filePath: string, month: number) {
   if (!process.env.PRIVATE_KEY || !process.env.PROJECT_ID) {
@@ -45,17 +28,17 @@ export async function distributeRNat(filePath: string, month: number) {
     );
   }
 
-  if (!month) {
+  if (month === undefined) {
     throw new Error("month is required.");
   }
 
-  let wallet = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
-  let projectId = process.env.PROJECT_ID;
-  let data = await readCSV(filePath);
+  const wallet = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
+  const projectId = process.env.PROJECT_ID;
+  const data = await readCSV(filePath);
 
-  let info = await rNat.methods.getProjectInfo(projectId).call();
-  let assigned = info[2];
-  let distributed = info[3];
+  const info = await rNat.methods.getProjectRewardsInfo(projectId, month).call();
+  const assigned = BigInt(info[0]);
+  const distributed = BigInt(info[1]);
 
   let amountToDistribute = BigInt(0);
 
@@ -66,12 +49,22 @@ export async function distributeRNat(filePath: string, month: number) {
     throw new Error("Amount to distribute exceeds assigned amount.");
   }
 
-  const batchSize = 3;
+  const projectInfo = await rNat.methods.getProjectInfo(projectId).call();
+  const projectName = projectInfo[0];
+
+  const batchSize = 3; // gas usage is around 45k + 8k per address; 600 in batch is safe
+  console.log(`Distributing rewards for project ${projectName} for month ${month}:`);
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
     const amountsBatch = data.amounts.slice(i, i + batchSize);
     var fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
     await signAndFinalize3(wallet, rNat.options.address, fnToEncode);
+  }
+
+  // check if all transactions are successful
+  for (let i = 0; i < data.addresses.length; i++) {
+    const ownerInfo = await rNat.methods.getOwnerRewardsInfo(0, 0, data.addresses[i]).call();
+    console.log("assigned for owner:" + data.addresses[i] + ": " + ownerInfo[0]);
   }
 }
 
@@ -86,8 +79,8 @@ async function readCSV(filePath: string) {
     skip_records_with_error: false
   }).map(
     (row: any) => {
-      addresses.push(row.address);
-      amounts.push(row.amount);
+      addresses.push(row["recipient address"]);
+      amounts.push(row["amount wei"]);
     }
   );
   let data = {
@@ -113,7 +106,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
 
   try {
     pending++;
-    console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}, to contract ${toAddress}`);
+    console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
     let receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
     console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
   } catch (e: any) {

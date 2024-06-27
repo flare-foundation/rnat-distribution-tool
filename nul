@@ -1,2 +1,0 @@
-$ /Users/timi/work/flare/rNat-distribution/node_modules/.bin/typechain --target=web3-v1 --out-dir typechain-web3-v1 'abi/+([a-zA-Z0-9_]).json'
-Successfully generated 3 typings!

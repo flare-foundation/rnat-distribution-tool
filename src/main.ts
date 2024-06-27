@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 
 import * as dotenv from 'dotenv';
-import { distribute, distributeRNat } from './distribute';
+import { distributeRNat } from './distribute';
 
-// initialize configuration
 dotenv.config();
 
 let yargs = require('yargs');
@@ -16,11 +15,10 @@ let args = yargs
 
 async function runDistribution() {
 
-   let filePath = args['filePath'] ? args['filePath'] : 'rewards.csv';
+   let filePath = args['filePath'] ? args['filePath'] : 'rewards-data.csv';
    let month = args['month'];
 
-// await distributeRNat(filePath, month);
-   await distribute(filePath);
+   await distributeRNat(filePath, month);
 }
 
 runDistribution()

@@ -4,22 +4,18 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const COSTON_CONFIG: NetworkContractAddresses = {
-  Dist: { name: "Dist", address: "0x9f78B79cdf8e070F45c3B19A5103D787cce05711" },
-  RNat: { name: "RNat", address: "" }
+  RNat: { name: "RNat", address: "0x324F16a2059D9B6c5f8A111210b1B7b9BDFD2a68" }
 };
 
 const COSTON2_CONFIG: NetworkContractAddresses = {
-  Dist: { name: "Dist", address: "" },
   RNat: { name: "RNat", address: "" }
 };
 
 const SONGBIRD_CONFIG: NetworkContractAddresses = {
-  Dist: { name: "Dist", address: "" },
   RNat: { name: "RNat", address: "" }
 };
 
 const FLARE_CONFIG: NetworkContractAddresses = {
-  Dist: { name: "Dist", address: "" },
   RNat: { name: "RNat", address: "" }
 };
 
