@@ -35,4 +35,10 @@ yarn distribute-rewards --month <month>
 where `<month>` is the month for which the rewards should be distributed
 (e.g. `yarn distribute-rewards --month 2`).
 
+### Custom CSV path
+One can also set custom path to the CSV file:
+```bash
+yarn distribute-rewards --month <month> --csvPath <path-to-csv-file>
+```
+
 
