@@ -60,12 +60,6 @@ export async function distributeRNat(filePath: string, month: number) {
     var fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
     await signAndFinalize3(wallet, rNat.options.address, fnToEncode);
   }
-
-  // check if all transactions are successful
-  for (let i = 0; i < data.addresses.length; i++) {
-    const ownerInfo = await rNat.methods.getOwnerRewardsInfo(0, 0, data.addresses[i]).call();
-    console.log("assigned for owner:" + data.addresses[i] + ": " + ownerInfo[0]);
-  }
 }
 
 async function readCSV(filePath: string) {
