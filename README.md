@@ -18,7 +18,7 @@ yarn
 ## Add CSV file with rewards data
 Create a CSV file named `rewards-data.csv` with the following columns
 - `recipient address` - address of the recipient
-- `amount wei` - amount of rNat to distribute in wei
+- `amount wei` - amount (in wei) of rNat to distribute to the recipient
 
 and put it to the root of the project.
 
