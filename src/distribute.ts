@@ -46,7 +46,7 @@ export async function distributeRNat(filePath: string, month: number) {
     amountToDistribute += BigInt(data.amounts[i]);
   }
   if (amountToDistribute + distributed > assigned) {
-    throw new Error("Amount to distribute exceeds assigned amount.");
+    throw new Error("Amount to distribute exceeds amount assigned for a given month.");
   }
 
   const projectInfo = await rNat.methods.getProjectInfo(projectId).call();
