@@ -52,7 +52,7 @@ export async function distributeRNat(filePath: string, month: number) {
   const projectInfo = await rNat.methods.getProjectInfo(projectId).call();
   const projectName = projectInfo[0];
 
-  const batchSize = 3; // gas usage is around 45k + 8k per address; 600 in batch is safe
+  const batchSize = 600; // gas usage is around 45k + 8k per address; 600 in batch is safe
   console.log(`Distributing rewards for project ${projectName} for month ${month}:`);
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
@@ -102,7 +102,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
     pending++;
     console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
     let receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
-    console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
+    // console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
   } catch (e: any) {
     if ("innerError" in e && "message" in e.innerError) {
       console.log("from: " + fromWallet.address + " to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
