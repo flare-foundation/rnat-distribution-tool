@@ -2,7 +2,7 @@
 Tool for distribution of rNat rewards.
 
 ##  Config file
-Create an environment file (`.env`) with the following content (see `.env-template`):
+Create an environment file (`.env`) with the following content (see [template](.env_template)):
 - PROJECT_ID - ID of the project
 - PRIVATE_KEY - Private key of the project's distributor
 - NETWORK - Network on which to distribute rewards (flare/songbird/coston/coston2)
@@ -16,7 +16,7 @@ yarn
 ```
 
 ## Add CSV file with rewards data
-Create a CSV file named `rewards-data.csv` with the following columns
+Create a CSV file named `rewards-data.csv` (see [example](rewards-data-example.csv)) with the following columns
 - `recipient address` - address of the recipient
 - `amount wei` - amount (in wei) of rNat to distribute to the recipient
 
