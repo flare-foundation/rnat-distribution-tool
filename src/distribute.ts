@@ -52,7 +52,7 @@ export async function distributeRNat(filePath: string, month: number) {
   const projectInfo = await rNat.methods.getProjectInfo(projectId).call();
   const projectName = projectInfo[0];
 
-  const batchSize = 600; // gas usage is around 45k + 8k per address; 600 in batch is safe
+  const batchSize = 50; // gas usage is 20k per address; 100 in batch is safe
   console.log(`Distributing rewards for project ${projectName} for month ${month}:`);
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
