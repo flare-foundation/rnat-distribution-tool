@@ -8,7 +8,7 @@ const COSTON_CONFIG: NetworkContractAddresses = {
 };
 
 const COSTON2_CONFIG: NetworkContractAddresses = {
-  RNat: { name: "RNat", address: "" }
+  RNat: { name: "RNat", address: "0x221D27529e7788B929E13533edc3b00ec1ac5e8A" }
 };
 
 const SONGBIRD_CONFIG: NetworkContractAddresses = {

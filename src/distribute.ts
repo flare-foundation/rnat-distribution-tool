@@ -20,6 +20,7 @@ const rNat = new web3.eth.Contract(rNatAbi, CONTRACTS.RNat.address);
 const waitFinalize3 = waitFinalize3Factory(web3);
 
 let pending: number = 0;
+let address2nonce: Map<string, number> = new Map();
 
 export async function distributeRNat(filePath: string, month: number) {
   if (!process.env.PRIVATE_KEY || !process.env.PROJECT_ID) {
@@ -52,7 +53,7 @@ export async function distributeRNat(filePath: string, month: number) {
   const projectInfo = await rNat.methods.getProjectInfo(projectId).call();
   const projectName = projectInfo[0];
 
-  const batchSize = 50; // gas usage is 20k per address; 50 in batch is safe
+  const batchSize = 50; // gas usage is at most 25k per address; 50 in batch is safe
   console.log(`Distributing rewards for project ${projectName} for month ${month}:`);
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
@@ -85,7 +86,9 @@ async function readCSV(filePath: string) {
 }
 
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
-  let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
+  // let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
+  // increase nonce manually to avoid nonce collision
+  let nonce = await incrementNonce(fromWallet.address)
   let gasPrice = await web3.eth.getGasPrice();
   gasPrice = gasPrice * 150n / 100n;
   var rawTX = {
@@ -93,7 +96,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
     from: fromWallet.address,
     to: toAddress,
     gas: "8000000",
-    gasPrice: gasPrice.toString(), //"40000000000",
+    gasPrice: gasPrice.toString(),
     data: fnToEncode.encodeABI()
   };
   var signedTx = await fromWallet.signTransaction(rawTX);
@@ -104,11 +107,34 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
     let receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
     // console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
   } catch (e: any) {
-    if ("innerError" in e && "message" in e.innerError) {
-      console.log("from: " + fromWallet.address + " to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
+    // TX failed -> nonce was not used; decrease it
+    decreaseNonce(fromWallet.address);
+    if ("innerError" in e && e.innerError != undefined && "message" in e.innerError) {
+      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
+    } else if ("reason" in e && e.reason != undefined) {
+      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.reason);
     } else {
       console.log(fromWallet.address + " | signAndFinalize3 error: " + e);
       console.dir(e);
     }
+  }
+}
+
+async function incrementNonce(address: string) {
+  let newNonce: number;
+  if (address2nonce.get(address)) {
+    newNonce = address2nonce.get(address)! + 1;
+  } else {
+    newNonce = Number((await web3.eth.getTransactionCount(address)));
+  }
+  address2nonce.set(address, newNonce);
+  return newNonce;
+}
+
+async function decreaseNonce(address: string) {
+  let newNonce: number;
+  if (address2nonce.get(address)) {
+    newNonce = address2nonce.get(address)! - 1;
+    address2nonce.set(address, newNonce);
   }
 }
