@@ -3,8 +3,10 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { bigIntReplacer, waitFinalize3Factory } from "./utils/utils";
+import { AddressError, AmountError, waitFinalize3Factory } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
+import { isAddress } from 'web3-validator';
+
 
 dotenv.config();
 
@@ -22,7 +24,7 @@ const waitFinalize3 = waitFinalize3Factory(web3);
 let pending: number = 0;
 let address2nonce: Map<string, number> = new Map();
 
-export async function distributeRNat(filePath: string, month: number) {
+export async function distributeRNat(filePath: string, month: number, showAssigned: boolean = false) {
   if (!process.env.PRIVATE_KEY || !process.env.PROJECT_ID) {
     throw new Error(
       "PRIVATE_KEY and PROJECT_ID env variables are required."
@@ -44,6 +46,14 @@ export async function distributeRNat(filePath: string, month: number) {
   let amountToDistribute = BigInt(0);
 
   for (let i = 0; i < data.addresses.length; i++) {
+    // check if address is valid
+    if (!isAddress(data.addresses[i])) {
+      throw new AddressError(data.addresses[i]);
+    }
+    // check if amount is provided
+    if (data.amounts[i] === "") {
+      throw new AmountError(data.addresses[i]);
+    }
     amountToDistribute += BigInt(data.amounts[i]);
   }
   if (amountToDistribute + distributed > assigned) {
@@ -61,6 +71,15 @@ export async function distributeRNat(filePath: string, month: number) {
     var fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
     await signAndFinalize3(wallet, rNat.options.address, fnToEncode);
   }
+
+  // check rNat assigned for each address
+  if (showAssigned) {
+    console.log(`Assigned rewards for project ${projectName} for month ${month}:`)
+    for (let i = 0; i < data.addresses.length; i++) {
+      const info = await rNat.methods.getOwnerRewardsInfo(projectId, month, data.addresses[i]).call();
+      console.log(`Address: ${data.addresses[i]} | Assigned: ${info[0]}`);
+    }
+  }
 }
 
 async function readCSV(filePath: string) {
@@ -71,7 +90,8 @@ async function readCSV(filePath: string) {
     columns: true,
     skip_empty_lines: true,
     delimiter: ',',
-    skip_records_with_error: false
+    skip_records_with_error: false,
+    trim: true
   }).map(
     (row: any) => {
       addresses.push(row["recipient address"]);

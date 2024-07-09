@@ -30,3 +30,15 @@ export function waitFinalize3Factory(web3: Web3) {
         return res;
     };
 }
+
+export class AmountError extends Error {
+    constructor(address: string) {
+        super(`Amount for address ${address} is not provided.`);
+    }
+}
+
+export class AddressError extends Error {
+    constructor(str: string) {
+        super(`${str} is not a valid address.`);
+    }
+}
