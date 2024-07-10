@@ -4,7 +4,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const COSTON_CONFIG: NetworkContractAddresses = {
-  RNat: { name: "RNat", address: "0x324F16a2059D9B6c5f8A111210b1B7b9BDFD2a68" }
+  RNat: { name: "RNat", address: "" }
 };
 
 const COSTON2_CONFIG: NetworkContractAddresses = {
@@ -16,7 +16,7 @@ const SONGBIRD_CONFIG: NetworkContractAddresses = {
 };
 
 const FLARE_CONFIG: NetworkContractAddresses = {
-  RNat: { name: "RNat", address: "" }
+  RNat: { name: "RNat", address: "0x26d460c3Cf931Fb2014FA436a49e3Af08619810e" }
 };
 
 const COSTON_RPC = "https://coston-api.flare.network/ext/bc/C/rpc";
