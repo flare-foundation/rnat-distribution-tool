@@ -48,11 +48,11 @@ export async function distributeRNat(filePath: string, month: number, showAssign
   for (let i = 0; i < data.addresses.length; i++) {
     // check if address is valid
     if (!isAddress(data.addresses[i])) {
-      throw new AddressError(data.addresses[i]);
+      throw new Error(`${data.addresses[i]} is not a valid address.`);
     }
     // check if amount is provided
     if (data.amounts[i] === "") {
-      throw new AmountError(data.addresses[i]);
+      throw new Error(`Amount for address ${data.addresses[i]} is not provided.`);
     }
     amountToDistribute += BigInt(data.amounts[i]);
   }
