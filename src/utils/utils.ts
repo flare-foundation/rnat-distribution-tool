@@ -42,3 +42,11 @@ export class AddressError extends Error {
         super(`${str} is not a valid address.`);
     }
 }
+
+export async function sleepms(milliseconds: number) {
+    await new Promise((resolve: any) => {
+       setTimeout(() => {
+          resolve();
+       }, milliseconds);
+    });
+ }

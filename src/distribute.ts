@@ -3,7 +3,7 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { AddressError, AmountError, waitFinalize3Factory } from "./utils/utils";
+import { waitFinalize3Factory } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
 import { isAddress } from 'web3-validator';
 
@@ -70,6 +70,7 @@ export async function distributeRNat(filePath: string, month: number, showAssign
     const amountsBatch = data.amounts.slice(i, i + batchSize);
     var fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
     await signAndFinalize3(wallet, rNat.options.address, fnToEncode);
+    // await sleepms(2000);
   }
 
   // check rNat assigned for each address
@@ -106,9 +107,7 @@ async function readCSV(filePath: string) {
 }
 
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
-  // let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
-  // increase nonce manually to avoid nonce collision
-  let nonce = await incrementNonce(fromWallet.address)
+  let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
   let gasPrice = await web3.eth.getGasPrice();
   gasPrice = gasPrice * 150n / 100n;
   var rawTX = {
@@ -127,8 +126,6 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
     let receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
     // console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
   } catch (e: any) {
-    // TX failed -> nonce was not used; decrease it
-    decreaseNonce(fromWallet.address);
     if ("innerError" in e && e.innerError != undefined && "message" in e.innerError) {
       console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
     } else if ("reason" in e && e.reason != undefined) {
@@ -137,24 +134,5 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
       console.log(fromWallet.address + " | signAndFinalize3 error: " + e);
       console.dir(e);
     }
-  }
-}
-
-async function incrementNonce(address: string) {
-  let newNonce: number;
-  if (address2nonce.get(address)) {
-    newNonce = address2nonce.get(address)! + 1;
-  } else {
-    newNonce = Number((await web3.eth.getTransactionCount(address)));
-  }
-  address2nonce.set(address, newNonce);
-  return newNonce;
-}
-
-async function decreaseNonce(address: string) {
-  let newNonce: number;
-  if (address2nonce.get(address)) {
-    newNonce = address2nonce.get(address)! - 1;
-    address2nonce.set(address, newNonce);
   }
 }
