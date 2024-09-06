@@ -108,12 +108,12 @@ async function readCSV(filePath: string) {
 }
 
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
-  let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
+  const nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
   // getBlockNumber sometimes returns a block beyond head block
-  let lastBlock = await web3.eth.getBlockNumber() - BigInt(2);
+  const lastBlock = await web3.eth.getBlockNumber() - BigInt(2);
   // get fee history for the last 50 blocks
-  let feeHistory = (await web3.eth.getFeeHistory(50, lastBlock, [0]));
-  let baseFee = feeHistory.baseFeePerGas as any as bigint[];
+  const feeHistory = (await web3.eth.getFeeHistory(50, lastBlock, [0]));
+  const baseFee = feeHistory.baseFeePerGas as any as bigint[];
   // get max fee of the last 50 blocks
   let maxFee = 0n;
   for (const fee of baseFee) {
@@ -134,7 +134,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   try {
     pending++;
     console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
-    let receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
+    const receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
     // console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
   } catch (e: any) {
     if ("innerError" in e && e.innerError != undefined && "message" in e.innerError) {
