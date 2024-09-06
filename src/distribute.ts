@@ -3,7 +3,7 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { waitFinalize, waitFinalize3Factory } from "./utils/utils";
+import { waitFinalize, WaitFinalizeOptions } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
 import { isAddress } from 'web3-validator';
 
@@ -19,7 +19,8 @@ const web3 = new Web3(RPC);
 const rNatAbi = JSON.parse(readFileSync(`abi/RNat.json`).toString()).abi;
 const rNat = new web3.eth.Contract(rNatAbi, CONTRACTS.RNat.address);
 
-const waitFinalize3 = waitFinalize(web3);
+const waitFinalizeOptions: WaitFinalizeOptions = { extraBlocks: 2, retries: 3, sleepMS: 1000 };
+const waitFinalize3 = waitFinalize(web3, waitFinalizeOptions);
 
 let pending: number = 0;
 let address2nonce: Map<string, number> = new Map();
@@ -114,19 +115,18 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   let feeHistory = (await web3.eth.getFeeHistory(50, lastBlock, [0]));
   let baseFee = feeHistory.baseFeePerGas as any as bigint[];
   // get max fee of the last 50 blocks
-  let maxFee = BigInt(0);
+  let maxFee = 0n;
   for (const fee of baseFee) {
     if (fee > maxFee) {
       maxFee = fee;
     }
   }
-  let gasPrice = maxFee * 200n / 100n;
   const rawTX = {
     nonce: nonce,
     from: fromWallet.address,
     to: toAddress,
     gas: "8000000",
-    gasPrice: gasPrice.toString(),
+    gasPrice: maxFee * 2n,
     data: fnToEncode.encodeABI()
   };
   const signedTx = await fromWallet.signTransaction(rawTX);
