@@ -3,7 +3,7 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { waitFinalize3Factory } from "./utils/utils";
+import { waitFinalize, waitFinalize3Factory } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
 import { isAddress } from 'web3-validator';
 
@@ -19,7 +19,7 @@ const web3 = new Web3(RPC);
 const rNatAbi = JSON.parse(readFileSync(`abi/RNat.json`).toString()).abi;
 const rNat = new web3.eth.Contract(rNatAbi, CONTRACTS.RNat.address);
 
-const waitFinalize3 = waitFinalize3Factory(web3);
+const waitFinalize3 = waitFinalize(web3);
 
 let pending: number = 0;
 let address2nonce: Map<string, number> = new Map();
@@ -68,7 +68,7 @@ export async function distributeRNat(filePath: string, month: number, showAssign
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
     const amountsBatch = data.amounts.slice(i, i + batchSize);
-    var fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
+    const fnToEncode = rNat.methods.distributeRewards(projectId, month, addressesBatch, amountsBatch);
     await signAndFinalize3(wallet, rNat.options.address, fnToEncode);
     // await sleepms(2000);
   }
@@ -108,9 +108,20 @@ async function readCSV(filePath: string) {
 
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
   let nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
-  let gasPrice = await web3.eth.getGasPrice();
-  gasPrice = gasPrice * 150n / 100n;
-  var rawTX = {
+  // getBlockNumber sometimes returns a block beyond head block
+  let lastBlock = await web3.eth.getBlockNumber() - BigInt(2);
+  // get fee history for the last 50 blocks
+  let feeHistory = (await web3.eth.getFeeHistory(50, lastBlock, [0]));
+  let baseFee = feeHistory.baseFeePerGas as any as bigint[];
+  // get max fee of the last 50 blocks
+  let maxFee = BigInt(0);
+  for (const fee of baseFee) {
+    if (fee > maxFee) {
+      maxFee = fee;
+    }
+  }
+  let gasPrice = maxFee * 200n / 100n;
+  const rawTX = {
     nonce: nonce,
     from: fromWallet.address,
     to: toAddress,
@@ -118,7 +129,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
     gasPrice: gasPrice.toString(),
     data: fnToEncode.encodeABI()
   };
-  var signedTx = await fromWallet.signTransaction(rawTX);
+  const signedTx = await fromWallet.signTransaction(rawTX);
 
   try {
     pending++;
