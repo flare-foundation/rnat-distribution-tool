@@ -110,23 +110,30 @@ async function readCSV(filePath: string) {
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
   const nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
   // getBlockNumber sometimes returns a block beyond head block
-  const lastBlock = await web3.eth.getBlockNumber() - BigInt(2);
+  const lastBlock = await web3.eth.getBlockNumber() - 2n;
   // get fee history for the last 50 blocks
-  const feeHistory = (await web3.eth.getFeeHistory(50, lastBlock, [0]));
-  const baseFee = feeHistory.baseFeePerGas as any as bigint[];
-  // get max fee of the last 50 blocks
-  let maxFee = 0n;
-  for (const fee of baseFee) {
-    if (fee > maxFee) {
-      maxFee = fee;
+  let gasPrice: bigint;
+  try {
+    const feeHistory = await web3.eth.getFeeHistory(50, lastBlock, [0]);
+    const baseFee = feeHistory.baseFeePerGas as any as bigint[];
+    // get max fee of the last 50 blocks
+    let maxFee = 0n;
+    for (const fee of baseFee) {
+      if (fee > maxFee) {
+        maxFee = fee;
+      }
     }
+    gasPrice = maxFee * 2n;
+  } catch (e) {
+    gasPrice = await web3.eth.getGasPrice() * 2n;
   }
+
   const rawTX = {
     nonce: nonce,
     from: fromWallet.address,
     to: toAddress,
     gas: "8000000",
-    gasPrice: maxFee * 2n,
+    gasPrice: gasPrice,
     data: fnToEncode.encodeABI()
   };
   const signedTx = await fromWallet.signTransaction(rawTX);
