@@ -110,7 +110,7 @@ async function readCSV(filePath: string) {
 async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: any) {
   const nonce = Number((await web3.eth.getTransactionCount(fromWallet.address)));
   // getBlockNumber sometimes returns a block beyond head block
-  const lastBlock = await web3.eth.getBlockNumber() - 2n;
+  const lastBlock = await web3.eth.getBlockNumber() - 3n;
   // get fee history for the last 50 blocks
   let gasPrice: bigint;
   try {
