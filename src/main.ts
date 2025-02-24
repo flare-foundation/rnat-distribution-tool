@@ -16,7 +16,7 @@ let args = yargs
 
 async function runDistribution() {
 
-   let filePath = args['csvPath'] ? args['csvPath'] : 'rewards-data.csv';
+   let filePath = args['csvPath'];
    let month = args['month'];
    let showAssigned = args['showAssigned'];
 

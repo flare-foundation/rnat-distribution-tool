@@ -138,19 +138,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   };
   const signedTx = await fromWallet.signTransaction(rawTX);
 
-  try {
     pending++;
     console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
-    const receipt = await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
-    // console.log("gas used " + JSON.stringify(receipt.gasUsed, bigIntReplacer));
-  } catch (e: any) {
-    if ("innerError" in e && e.innerError != undefined && "message" in e.innerError) {
-      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
-    } else if ("reason" in e && e.reason != undefined) {
-      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.reason);
-    } else {
-      console.log(fromWallet.address + " | signAndFinalize3 error: " + e);
-      console.dir(e);
-    }
-  }
+    await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
 }
