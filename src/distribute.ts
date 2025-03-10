@@ -138,7 +138,7 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   };
   const signedTx = await fromWallet.signTransaction(rawTX);
 
-    pending++;
-    console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
-    await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
+  pending++;
+  console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
+  await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
 }
