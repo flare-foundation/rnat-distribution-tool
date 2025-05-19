@@ -100,7 +100,7 @@ async function readCSV(filePath: string) {
       addresses.push(row["recipient address"]);
       amounts.push(row["amount wei"]);
       // amounts.push(parseNumberToInteger(row["amount wei"]));
-      // console.log(parseNumberToInteger(row["amount wei"]))
+       // console.log(parseNumberToInteger(row["amount wei"]))
     }
   );
   let data = {
@@ -141,7 +141,6 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   };
   const signedTx = await fromWallet.signTransaction(rawTX);
 
-  pending++;
   try {
     pending++;
     console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
