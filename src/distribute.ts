@@ -3,7 +3,7 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { parseNumberToInteger, sleepms, waitFinalize, WaitFinalizeOptions } from "./utils/utils";
+import { waitFinalize, WaitFinalizeOptions } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
 import { isAddress } from 'web3-validator';
 
@@ -23,7 +23,6 @@ const waitFinalizeOptions: WaitFinalizeOptions = { extraBlocks: 2, retries: 3, s
 const waitFinalize3 = waitFinalize(web3, waitFinalizeOptions);
 
 let pending: number = 0;
-let address2nonce: Map<string, number> = new Map();
 
 export async function distributeRNat(filePath: string, month: number, showAssigned: boolean = false) {
   if (!process.env.PRIVATE_KEY || !process.env.PROJECT_ID) {
@@ -99,8 +98,6 @@ async function readCSV(filePath: string) {
     (row: any) => {
       addresses.push(row["recipient address"]);
       amounts.push(row["amount wei"]);
-      // amounts.push(parseNumberToInteger(row["amount wei"]));
-       // console.log(parseNumberToInteger(row["amount wei"]))
     }
   );
   let data = {
