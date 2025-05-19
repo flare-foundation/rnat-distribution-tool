@@ -3,7 +3,7 @@ import { CONTRACTS, RPC } from "../configs/networks";
 import { readFileSync } from "fs";
 import * as dotenv from "dotenv";
 import * as fs from 'fs';
-import { waitFinalize, WaitFinalizeOptions } from "./utils/utils";
+import { parseNumberToInteger, sleepms, waitFinalize, WaitFinalizeOptions } from "./utils/utils";
 const parseCsv = require('csv-parse/lib/sync');
 import { isAddress } from 'web3-validator';
 
@@ -58,6 +58,7 @@ export async function distributeRNat(filePath: string, month: number, showAssign
     amountToDistribute += BigInt(data.amounts[i]);
   }
   if (amountToDistribute + distributed > assigned) {
+    console.log(`Amount to distribute: ${amountToDistribute}, distributed: ${distributed}, assigned: ${assigned}`);
     throw new Error("Amount to distribute exceeds amount assigned for a given month.");
   }
 
@@ -66,6 +67,7 @@ export async function distributeRNat(filePath: string, month: number, showAssign
 
   const batchSize = 50; // gas usage is at most 25k per address; 50 in batch is safe
   console.log(`Distributing rewards for project ${projectName} for month ${month}:`);
+  await sleepms(10000); // wait for 10 seconds
   for (let i = 0; i < data.addresses.length; i += batchSize) {
     const addressesBatch = data.addresses.slice(i, i + batchSize);
     const amountsBatch = data.amounts.slice(i, i + batchSize);
@@ -97,7 +99,8 @@ async function readCSV(filePath: string) {
   }).map(
     (row: any) => {
       addresses.push(row["recipient address"]);
-      amounts.push(row["amount wei"]);
+      amounts.push(parseNumberToInteger(row["amount wei"]));
+      // console.log(parseNumberToInteger(row["amount wei"]))
     }
   );
   let data = {
@@ -139,6 +142,19 @@ async function signAndFinalize3(fromWallet: any, toAddress: string, fnToEncode: 
   const signedTx = await fromWallet.signTransaction(rawTX);
 
   pending++;
-  console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
-  await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
+  try {
+    pending++;
+    console.log(`Send - pending: ${pending}, nonce: ${nonce}, from ${fromWallet.address}`);
+    await waitFinalize3(fromWallet.address, async () => web3.eth.sendSignedTransaction(signedTx.rawTransaction!));
+  } catch (e: any) {
+    if ("innerError" in e && e.innerError != undefined && "message" in e.innerError) {
+      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.innerError.message);
+    } else if ("reason" in e && e.reason != undefined) {
+      console.log("from: " + fromWallet.address + " | to: " + toAddress + " | signAndFinalize3 error: " + e.reason);
+    } else {
+      console.log(fromWallet.address + " | signAndFinalize3 error: " + e);
+      console.dir(e);
+    }
+    throw e;
+  }
 }
